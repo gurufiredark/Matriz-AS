@@ -4,9 +4,8 @@
     prompt_entry:   .asciz "Digite o valor para a linha %d, coluna %d: "
     result_matrix:  .asciz "Matriz resultante:\n"
     format_int:     .asciz "%d"
-    format_entry:   .asciz "%d %d"
-    space:          .asciz " "
     newline:        .asciz "\n"
+    space:          .asciz " "
     linhas:         .int 0
     colunas:        .int 0
     matriz:         .int 0
@@ -80,7 +79,7 @@ fill_matrix_cols:
     movl    %esi, %ecx
     imull   colunas, %ecx
     addl    %edi, %ecx
-    imull   $4, %ecx
+    shll    $2, %ecx   # multiplicar por 4 (tamanho de int)
     movl    matriz, %ebx
     addl    %ecx, %ebx
     movl    value_buff, %eax
@@ -115,7 +114,7 @@ print_matrix_cols:
     movl    %esi, %ecx
     imull   colunas, %ecx
     addl    %edi, %ecx
-    imull   $4, %ecx
+    shll    $2, %ecx   # multiplicar por 4 (tamanho de int)
     movl    matriz, %ebx
     addl    %ecx, %ebx
     movl    (%ebx), %eax
