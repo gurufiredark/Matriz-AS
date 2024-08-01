@@ -11,8 +11,9 @@
     bye_msg:    .asciz "Obrigado por usar o programa!\n"
     format_int: .asciz "%d"
     format_op:  .asciz "%d"
-    newline:    .asciz "\n"
+    format_ptr: .asciz "%p\n"
     space:      .asciz " "
+    newline:    .asciz "\n"
     linhas:     .int 0
     colunas:    .int 0
     matriz:     .int 0
@@ -80,6 +81,12 @@ opcao_1:  # Preencher matriz NxM
     addl    $4, %esp
     movl    %eax, matriz
 
+    # Depurar: Mostrar o ponteiro da matriz
+    pushl   matriz
+    pushl   $format_ptr
+    call    printf
+    addl    $8, %esp
+
     # Alocar memória para cada linha
     movl    $0, %esi
 allocate_rows:
@@ -100,14 +107,21 @@ allocate_rows:
     addl    $4, %esp
     movl    %eax, (%ebx)
 
+    # Depurar: Mostrar o ponteiro da linha
+    pushl   (%ebx)
+    pushl   $format_ptr
+    call    printf
+    addl    $8, %esp
+
     incl    %esi
     jmp     allocate_rows
 
 end_allocate_rows:
+    jmp     fill_matrix
 
+fill_matrix:
     # Preencher a matriz
     movl    $0, %esi
-    
 fill_matrix_rows:
     cmpl    linhas, %esi
     jge     end_fill_matrix_rows
@@ -138,9 +152,22 @@ fill_matrix_cols:
     addl    %ecx, %ebx
     movl    (%ebx), %ebx  # ebx agora aponta para a linha correta
 
+    # Depurar: Mostrar o ponteiro da linha
+    pushl   %ebx
+    pushl   $format_ptr
+    call    printf
+    addl    $8, %esp
+
     movl    %edi, %ecx
     shll    $2, %ecx   # multiplicar por 4 (tamanho de int)
     addl    %ecx, %ebx
+
+    # Depurar: Mostrar o endereço onde o valor será armazenado
+    pushl   %ebx
+    pushl   $format_ptr
+    call    printf
+    addl    $8, %esp
+
     movl    value_buff, %eax
     movl    (%eax), %edx
     movl    %edx, (%ebx)
