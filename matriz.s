@@ -1,9 +1,11 @@
 .section .data
     vetor:      .space 400    # Espaço para vetor (máximo 100 elementos)
+    lucky_vetor: .space 400   # Novo vetor para armazenar lucky numbers
+    lucky_count: .long 0      # Contador de lucky numbers encontrados
     N:          .long 0       # Número de linhas
     M:          .long 0       # Número de colunas
     temp:       .long 0       # Variável temporária para leitura
-    menu_msg:   .asciz "\n1 - Preencher matriz NxM\n2 - Buscar elemento na matriz\n3 - Mostrar diagonal principal\n4 - Mostrar lucky number\n5 - Mostrar matriz\n6 - Sair\nEscolha uma opção: "
+    menu_msg:   .asciz "\n1 - Preencher matriz NxM\n2 - Buscar elemento na matriz\n3 - Mostrar diagonal principal\n4 - Mostrar lucky numbers\n5 - Mostrar matriz\n6 - Sair\nEscolha uma opção: "
     input_fmt:  .asciz "%d"
     output_fmt: .asciz "%d "
     newline:    .asciz "\n"
@@ -12,11 +14,13 @@
     elem_msg:   .asciz "Digite o elemento a ser buscado: "
     found_msg:  .asciz "Elemento encontrado na posição (%d, %d)\n"
     not_found:  .asciz "Elemento não encontrado\n"
-    lucky_msg:  .asciz "Lucky number encontrado:\n"
+    lucky_msg:  .asciz "Lucky numbers encontrados:\n"
     lucky_format: .asciz "%d (%d, %d)\n"
     no_lucky:   .asciz "Nenhum Lucky number encontrado\n"
     show_matrix_msg: .asciz "Matriz atual:\n"
     pos_msg:    .asciz "Digite o elemento para a posição (%d, %d): "
+    search_result_msg: .asciz "Resultados da busca:\n"
+    search_count: .long 0     # Contador para o número de ocorrências encontradas
 
 .section .text
 .globl _start
@@ -103,6 +107,9 @@ loop_preencher_coluna:
     cmpl N, %edi
     jl loop_preencher_linha
 
+    # Calcular lucky numbers após preencher a matriz
+    call calcular_lucky
+
     jmp menu_loop
 
 buscar_elemento:
@@ -117,25 +124,19 @@ buscar_elemento:
 
     movl temp, %ebx  # Elemento a ser buscado
     movl $0, %esi    # índice do vetor
+    movl $0, search_count  # Resetar o contador de ocorrências
+
+    # Imprimir mensagem de resultados da busca
+    pushl $search_result_msg
+    call printf
+    addl $4, %esp
 
 busca_loop:
     movl vetor(, %esi, 4), %eax
     cmpl %ebx, %eax
-    je encontrado
+    jne not_found_here
 
-    incl %esi
-    movl N, %eax
-    mull M
-    cmpl %eax, %esi
-    jl busca_loop
-
-    pushl $not_found
-    call printf
-    addl $4, %esp
-    jmp menu_loop
-
-encontrado:
-    # Calcular linha e coluna
+    # Elemento encontrado, calcular linha e coluna
     movl %esi, %eax
     movl $0, %edx
     divl M
@@ -144,6 +145,26 @@ encontrado:
     pushl $found_msg
     call printf
     addl $12, %esp
+
+    incl search_count
+
+not_found_here:
+    incl %esi
+    movl N, %eax
+    mull M
+    cmpl %eax, %esi
+    jl busca_loop
+
+    # Verificar se algum elemento foi encontrado
+    cmpl $0, search_count
+    jne end_search
+
+    # Se nenhum elemento foi encontrado, imprimir mensagem
+    pushl $not_found
+    call printf
+    addl $4, %esp
+
+end_search:
     jmp menu_loop
 
 mostrar_diagonal:
@@ -171,12 +192,44 @@ diag_loop:
     jmp menu_loop
 
 mostrar_lucky:
-    # Imprimir mensagem inicial
+    cmpl $0, lucky_count
+    je no_lucky_found
+
+    # Imprimir os lucky numbers encontrados
     pushl $lucky_msg
     call printf
     addl $4, %esp
 
-    movl $0, %edx  # flag para indicar se um lucky number foi encontrado
+    movl $0, %edi  # Índice para percorrer lucky_vetor
+    movl lucky_count, %esi
+    
+print_lucky_loop:
+    movl lucky_vetor(, %edi, 4), %eax  # Número
+    movl lucky_vetor+4(, %edi, 4), %ebx  # Linha
+    movl lucky_vetor+8(, %edi, 4), %ecx  # Coluna
+    
+    pushl %ecx
+    pushl %ebx
+    pushl %eax
+    pushl $lucky_format
+    call printf
+    addl $16, %esp
+
+    addl $3, %edi
+    cmpl %esi, %edi
+    jl print_lucky_loop
+    jmp menu_loop
+
+no_lucky_found:
+    pushl $no_lucky
+    call printf
+    addl $4, %esp
+    jmp menu_loop
+
+calcular_lucky:
+    # Resetar o contador de lucky numbers
+    movl $0, lucky_count
+
     movl $0, %edi  # índice da linha atual
 
 lucky_loop_linha:
@@ -189,7 +242,7 @@ lucky_loop_coluna:
     addl %esi, %eax
     movl vetor(, %eax, 4), %ebx  # Elemento atual
 
-    # Verificar se é mínimo da linha
+    # Verificar se é mínimo na linha
     movl $1, %ecx  # flag: 1 se for mínimo da linha
     pushl %esi
     movl $0, %esi  # resetar índice da coluna para comparação
@@ -214,7 +267,7 @@ end_min_linha_loop:
     cmpl $0, %ecx
     je continue_lucky_number
 
-    # Verificar se é máximo da coluna
+    # Verificar se é máximo na coluna
     movl $1, %ecx  # flag: 1 se for máximo da coluna
     pushl %edi
     movl $0, %edi  # resetar índice da linha para comparação
@@ -239,14 +292,14 @@ end_max_coluna_loop:
     cmpl $0, %ecx
     je continue_lucky_number
 
-    # É um lucky number, imprimir com sua posição
-    pushl %esi  # coluna
-    pushl %edi  # linha
-    pushl %ebx  # número
-    pushl $lucky_format
-    call printf
-    addl $16, %esp
-    movl $1, %edx  # Indica que um lucky number foi encontrado
+    # É um lucky number, armazenar no lucky_vetor
+    movl lucky_count, %eax
+    leal lucky_vetor(, %eax, 4), %ecx
+    movl %ebx, (%ecx)  # Armazenar o número
+    movl %edi, 4(%ecx)  # Armazenar a linha
+    movl %esi, 8(%ecx)  # Armazenar a coluna
+    addl $3, %eax
+    movl %eax, lucky_count
 
 continue_lucky_number:
     incl %esi
@@ -257,17 +310,7 @@ continue_lucky_number:
     cmpl N, %edi
     jl lucky_loop_linha
 
-    # Verificar se algum lucky number foi encontrado
-    cmpl $0, %edx
-    jne end_lucky
-
-    # Se chegou aqui, não encontrou nenhum lucky number
-    pushl $no_lucky
-    call printf
-    addl $4, %esp
-
-end_lucky:
-    jmp menu_loop
+    ret
 
 mostrar_matriz:
     # Imprimir mensagem inicial
@@ -317,3 +360,4 @@ sair:
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
+    
