@@ -16,6 +16,7 @@
     lucky_format: .asciz "%d (%d, %d)\n"
     no_lucky:   .asciz "Nenhum Lucky number encontrado\n"
     show_matrix_msg: .asciz "Matriz atual:\n"
+    pos_msg:    .asciz "Digite o elemento para a posição (%d, %d): "
 
 .section .text
 .globl _start
@@ -66,24 +67,41 @@ preencher_matriz:
     call scanf
     addl $8, %esp
 
-    movl $0, %esi  # índice do vetor
+    movl $0, %edi  # contador de linha
 
-loop_preencher:
+loop_preencher_linha:
+    movl $0, %esi  # contador de coluna
+
+loop_preencher_coluna:
+    # Mostrar a posição atual
+    pushl %esi
+    pushl %edi
+    pushl $pos_msg
+    call printf
+    addl $12, %esp
+
     # Ler elemento
     pushl $temp
     pushl $input_fmt
     call scanf
     addl $8, %esp
 
+    # Calcular o índice no vetor
+    movl %edi, %eax
+    mull M
+    addl %esi, %eax
+
     # Armazenar elemento no vetor
     movl temp, %ebx
-    movl %ebx, vetor(, %esi, 4)
+    movl %ebx, vetor(, %eax, 4)
 
     incl %esi
-    movl N, %eax
-    mull M
-    cmpl %eax, %esi
-    jl loop_preencher
+    cmpl M, %esi
+    jl loop_preencher_coluna
+
+    incl %edi
+    cmpl N, %edi
+    jl loop_preencher_linha
 
     jmp menu_loop
 
@@ -299,4 +317,3 @@ sair:
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
-    
