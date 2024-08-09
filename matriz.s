@@ -3,7 +3,7 @@
     N:          .long 0       # Número de linhas
     M:          .long 0       # Número de colunas
     temp:       .long 0       # Variável temporária para leitura
-    menu_msg:   .asciz "\n1 - Preencher matriz NxM\n2 - Buscar elemento na matriz\n3 - Mostrar diagonal principal\n4 - Mostrar lucky number\n5 - Sair\nEscolha uma opção: "
+    menu_msg:   .asciz "\n1 - Preencher matriz NxM\n2 - Buscar elemento na matriz\n3 - Mostrar diagonal principal\n4 - Mostrar lucky number\n5 - Mostrar matriz\n6 - Sair\nEscolha uma opção: "
     input_fmt:  .asciz "%d"
     output_fmt: .asciz "%d "
     newline:    .asciz "\n"
@@ -15,6 +15,7 @@
     lucky_msg:  .asciz "Lucky number encontrado:\n"
     lucky_format: .asciz "%d (%d, %d)\n"
     no_lucky:   .asciz "Nenhum Lucky number encontrado\n"
+    show_matrix_msg: .asciz "Matriz atual:\n"
 
 .section .text
 .globl _start
@@ -43,6 +44,8 @@ menu_loop:
     cmpl $4, %eax
     je mostrar_lucky
     cmpl $5, %eax
+    je mostrar_matriz
+    cmpl $6, %eax
     je sair
 
     jmp menu_loop
@@ -248,6 +251,45 @@ continue_lucky_number:
 end_lucky:
     jmp menu_loop
 
+mostrar_matriz:
+    # Imprimir mensagem inicial
+    pushl $show_matrix_msg
+    call printf
+    addl $4, %esp
+
+    movl $0, %edi  # índice da linha atual
+
+mostrar_matriz_loop_linha:
+    movl $0, %esi  # índice da coluna atual
+
+mostrar_matriz_loop_coluna:
+    # Calcular o índice do elemento atual no vetor
+    movl %edi, %eax
+    mull M
+    addl %esi, %eax
+    movl vetor(, %eax, 4), %ebx  # Elemento atual
+
+    # Imprimir o elemento
+    pushl %ebx
+    pushl $output_fmt
+    call printf
+    addl $8, %esp
+
+    incl %esi
+    cmpl M, %esi
+    jl mostrar_matriz_loop_coluna
+
+    # Nova linha após cada linha da matriz
+    pushl $newline
+    call printf
+    addl $4, %esp
+
+    incl %edi
+    cmpl N, %edi
+    jl mostrar_matriz_loop_linha
+
+    jmp menu_loop
+
 sair:
     pushl $goodbye
     call printf
@@ -257,3 +299,4 @@ sair:
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
+    
