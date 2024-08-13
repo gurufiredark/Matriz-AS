@@ -1,6 +1,6 @@
 .section .data
     vetor:      .space 400    # Espaço para vetor (máximo 100 elementos)
-    lucky_vetor: .space 400   # Novo vetor para armazenar lucky numbers
+    lucky_vetor: .space 400   # Vetor para armazenar lucky numbers
     lucky_count: .long 0      # Contador de lucky numbers encontrados
     N:          .long 0       # Número de linhas
     M:          .long 0       # Número de colunas
@@ -126,7 +126,7 @@ buscar_elemento:
     movl $0, %esi    # índice do vetor
     movl $0, search_count  # Resetar o contador de ocorrências
 
-    # Imprimir mensagem de resultados da busca
+    # Imprime mensagem de resultados da busca
     pushl $search_result_msg
     call printf
     addl $4, %esp
@@ -136,7 +136,7 @@ busca_loop:
     cmpl %ebx, %eax
     jne not_found_here
 
-    # Elemento encontrado, calcular linha e coluna
+    # Elemento encontrado, calcula linha e coluna
     movl %esi, %eax
     movl $0, %edx
     divl M
@@ -155,11 +155,11 @@ not_found_here:
     cmpl %eax, %esi
     jl busca_loop
 
-    # Verificar se algum elemento foi encontrado
+    # Verifica se algum elemento foi encontrado
     cmpl $0, search_count
     jne end_search
 
-    # Se nenhum elemento foi encontrado, imprimir mensagem
+    # Se nenhum elemento foi encontrado, imprime mensagem
     pushl $not_found
     call printf
     addl $4, %esp
@@ -195,7 +195,7 @@ mostrar_lucky:
     cmpl $0, lucky_count
     je no_lucky_found
 
-    # Imprimir os lucky numbers encontrados
+    # Imprime os lucky numbers encontrados
     pushl $lucky_msg
     call printf
     addl $4, %esp
@@ -227,7 +227,7 @@ no_lucky_found:
     jmp menu_loop
 
 calcular_lucky:
-    # Resetar o contador de lucky numbers
+    # Reseta o contador de lucky numbers
     movl $0, lucky_count
 
     movl $0, %edi  # índice da linha atual
@@ -236,16 +236,16 @@ lucky_loop_linha:
     movl $0, %esi  # índice da coluna atual
 
 lucky_loop_coluna:
-    # Calcular o índice do elemento atual no vetor
+    # Calculo do índice do elemento atual no vetor
     movl %edi, %eax
     mull M
     addl %esi, %eax
     movl vetor(, %eax, 4), %ebx  # Elemento atual
 
-    # Verificar se é mínimo na linha
+    # Verifica se é mínimo na linha
     movl $1, %ecx  # flag: 1 se for mínimo da linha
     pushl %esi
-    movl $0, %esi  # resetar índice da coluna para comparação
+    movl $0, %esi  # reseta índice da coluna para comparação
 
 min_linha_loop:
     movl %edi, %eax
@@ -267,10 +267,10 @@ end_min_linha_loop:
     cmpl $0, %ecx
     je continue_lucky_number
 
-    # Verificar se é máximo na coluna
+    # Verifica se é máximo na coluna
     movl $1, %ecx  # flag: 1 se for máximo da coluna
     pushl %edi
-    movl $0, %edi  # resetar índice da linha para comparação
+    movl $0, %edi  # reseta índice da linha para comparação
 
 max_coluna_loop:
     movl %edi, %eax
@@ -292,7 +292,7 @@ end_max_coluna_loop:
     cmpl $0, %ecx
     je continue_lucky_number
 
-    # É um lucky number, armazenar no lucky_vetor
+    # É um lucky number, armazena no lucky_vetor
     movl lucky_count, %eax
     leal lucky_vetor(, %eax, 4), %ecx
     movl %ebx, (%ecx)  # Armazenar o número
@@ -313,7 +313,7 @@ continue_lucky_number:
     ret
 
 mostrar_matriz:
-    # Imprimir mensagem inicial
+    # Imprime mensagem inicial
     pushl $show_matrix_msg
     call printf
     addl $4, %esp
@@ -324,13 +324,13 @@ mostrar_matriz_loop_linha:
     movl $0, %esi  # índice da coluna atual
 
 mostrar_matriz_loop_coluna:
-    # Calcular o índice do elemento atual no vetor
+    # Calcula o índice do elemento atual no vetor
     movl %edi, %eax
     mull M
     addl %esi, %eax
     movl vetor(, %eax, 4), %ebx  # Elemento atual
 
-    # Imprimir o elemento
+    # Imprime o elemento
     pushl %ebx
     pushl $output_fmt
     call printf
@@ -356,7 +356,7 @@ sair:
     call printf
     addl $4, %esp
 
-    # Encerrar o programa
+    # Encerra o programa
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
