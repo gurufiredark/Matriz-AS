@@ -77,32 +77,34 @@ loop_preencher_linha:
     movl $0, %esi  # contador de coluna
 
 loop_preencher_coluna:
-    # Mostrar a posição atual
+    # Mostra a posição atual
     pushl %esi
     pushl %edi
     pushl $pos_msg
     call printf
     addl $12, %esp
 
-    # Ler elemento
+    # Le elemento
     pushl $temp
     pushl $input_fmt
     call scanf
     addl $8, %esp
 
-    # Calcular o índice no vetor
+    # Calcula o índice no vetor
     movl %edi, %eax
     mull M
     addl %esi, %eax
 
-    # Armazenar elemento no vetor
+    # Armazena o elemento no vetor
     movl temp, %ebx
     movl %ebx, vetor(, %eax, 4)
 
+    # Próxima coluna (elemento)  
     incl %esi
     cmpl M, %esi
     jl loop_preencher_coluna
 
+    # Próxima linha
     incl %edi
     cmpl N, %edi
     jl loop_preencher_linha
@@ -180,10 +182,10 @@ diag_loop:
     addl $8, %esp
 
     # Próximo elemento da diagonal
-    addl M, %esi
+    addl M, %esi # pula M posições
     incl %esi
     incl %edi
-    cmpl N, %edi
+    cmpl N, %edi # Verifica se já percorreu todas as diagonais
     jl diag_loop
 
     pushl $newline
@@ -247,6 +249,7 @@ lucky_loop_coluna:
     pushl %esi
     movl $0, %esi  # reseta índice da coluna para comparação
 
+# Verifica se é mínimo na linha
 min_linha_loop:
     movl %edi, %eax
     mull M
@@ -272,6 +275,7 @@ end_min_linha_loop:
     pushl %edi
     movl $0, %edi  # reseta índice da linha para comparação
 
+# Verifica se é máximo na coluna
 max_coluna_loop:
     movl %edi, %eax
     mull M
@@ -301,6 +305,7 @@ end_max_coluna_loop:
     addl $3, %eax
     movl %eax, lucky_count
 
+# Próximo elemento
 continue_lucky_number:
     incl %esi
     cmpl M, %esi
